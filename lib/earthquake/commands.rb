@@ -223,6 +223,11 @@ Earthquake.init do
     puts_items twitter.home_timeline(:count => config[:recent_count])
   end
 
+  # :recent 40
+  command %r|^:recent\s(\d+)$|, :as => :recent do |m|
+    puts_items twitter.home_timeline(:count => m[1])
+  end
+
   # :recent jugyo
   command %r|^:recent\s+([^\/\s]+)$|, :as => :recent do |m|
     puts_items twitter.user_timeline(:screen_name => m[1])
@@ -235,6 +240,7 @@ Earthquake.init do
 
   help :recent, "show recent tweets", <<-HELP
     ⚡ :recent
+    ⚡ :recent recent_count
     ⚡ :recent user
     ⚡ :recent user/list
   HELP
