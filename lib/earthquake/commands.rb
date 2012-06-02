@@ -411,6 +411,47 @@ Earthquake.init do
     reconnect
   end
 
+  command :stream_stop do
+    @searchstream.stop if @searchstream
+    puts "search stream stopped"
+  end
+
+  command :stream do |m|
+    # :stream foo,bar,baz
+    query = m[1]
+    @searchstream.stop if @searchstream
+    @searchstream = begin
+      puts "search stream started tracking with '#{query}'"
+      options = {
+        :method => "POST",
+        :path => "/1/statuses/filter.json",
+        :filters => [query],
+        :oauth => config.slice(:consumer_key, :consumer_secret).merge(
+          :access_key => config[:token], :access_secret => config[:secret]
+        )
+      }
+      st = ::Twitter::JSONStream.connect(options)
+
+      st.each_item do |item|
+        item_queue << JSON.parse(item)
+      end
+
+      st.on_error do |message|
+        notify "error(search stream): #{message}"
+      end
+
+      st.on_reconnect do |timeout, retries|
+        notify "reconnectiong(search stream) in #{timeout} seconds"
+      end
+
+      st.on_max_reconnects do |timeout, retries|
+        notify "Failed after #{retries} failed reconnects"
+      end
+
+      st
+    end
+  end
+
   command :thread do |m|
     thread = [twitter.status(m[1])]
     while reply = thread.last["in_reply_to_status_id"]
