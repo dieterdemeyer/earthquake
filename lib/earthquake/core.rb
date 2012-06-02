@@ -71,7 +71,7 @@ module Earthquake
         expand_url:      false,
         thread_indent:   "  ",
         recent_count:    40,
-        no_data_timeout: 30
+        no_data_timeout: 60
       }
     end
 
