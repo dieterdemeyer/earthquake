@@ -229,7 +229,7 @@ Earthquake.init do
   end
 
   # :recent jugyo
-  command %r|^:recent\s+([^\/\s]+)$|, :as => :recent do |m|
+  command %r|^:recent\s+@?([^\/\s]+)$|, :as => :recent do |m|
     puts_items twitter.user_timeline(:screen_name => m[1])
   end
 
@@ -407,7 +407,7 @@ Earthquake.init do
 
   help :sent_messages, "list direct messages sent"
 
-  command %r|^:message (\w+)\s+(.*)|, :as => :message do |m|
+  command %r|^:message @?(\w+)\s+(.*)|, :as => :message do |m|
     async_e { twitter.message(*m[1, 2]) } if confirm("message '#{m[2]}' to @#{m[1]}")
   end
 
@@ -480,7 +480,9 @@ Earthquake.init do
   help :update_profile_image, "updates profile image from local file path"
 
   command %r|^:open\s+(\d+)$|, :as => :open do |m|
-    matches = URI.extract(twitter.status(m[1])["text"],["http", "https"])
+    matches = twitter.status(m[1])['retweeted_status'].nil? ? 
+      URI.extract(twitter.status(m[1])["text"],["http", "https"]) :
+      URI.extract(twitter.status(m[1])['retweeted_status']["text"],["http", "https"]) 
     unless matches.empty?
       matches.each do |match_url|
         browse match_url
@@ -533,15 +535,15 @@ Earthquake.init do
     else
       puts "..."
       gist_id = uri.path[/\d+/]
-      meta = JSON.parse(open("https://gist.github.com/api/v1/json/#{gist_id}").read)
-      filename = meta["gists"][0]["files"][0]
-      raw = open("https://gist.github.com/raw/#{gist_id}/#{filename}").read
+      meta = JSON.parse(open("https://api.github.com/gists/#{gist_id}").read)
+      filename = meta["files"].keys[0]
+      raw = meta['files'][filename]['content']
 
       puts '-' * 80
       puts raw.c(36)
       puts '-' * 80
 
-      filename = "#{meta["gists"][0]["repo"]}.rb" if filename =~ /^gistfile/
+      filename = "#{meta["id"]}.rb" if filename =~ /^gistfile/
       filepath = File.join(config[:plugin_dir], filename)
       if confirm("Install to '#{filepath}'?")
         File.open(File.join(config[:plugin_dir], filename), 'w') do |file|
