@@ -61,7 +61,7 @@ module Earthquake
         time_format:     Time::DATE_FORMATS[:short],
         plugin_dir:      File.join(dir, 'plugin'),
         file:            File.join(dir, 'config'),
-        prompt:          [9889].pack('U*'),
+        prompt:          [9889].pack('U*') + ' ',
         consumer_key:    consumer['key'],
         consumer_secret: consumer['secret'],
         output_interval: 1,
